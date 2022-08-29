@@ -36,10 +36,6 @@ clean_tokyo_listings_df = tokyo_listings_df.fillna({'last_review':0,'license':0,
 
 clean_tokyo_listings_df.isnull().sum()
 
-tokyo_listings_df.describe()
-
 #For data exploration, we can drop the unuseful columns 
 #correlation between price, min nights, room_type,neighbourhood,number_of_reviews, reviwews per month, availability 365 ; the other columns can be removed except id,host_id,lat and long
-
-clean_tokyo_listings_df.columns
 
