@@ -19,6 +19,10 @@ tokyo_listings_df.shape
 
 tokyo_listings_df.info()
 
+"""#Data Cleaning
+
+"""
+
 #neighbourhood_group has no values; it can be removed
 
 tokyo_listings_df.drop('neighbourhood_group', axis=1,inplace=True)
@@ -38,4 +42,30 @@ clean_tokyo_listings_df.isnull().sum()
 
 #For data exploration, we can drop the unuseful columns 
 #correlation between price, min nights, room_type,neighbourhood,number_of_reviews, reviwews per month, availability 365 ; the other columns can be removed except id,host_id,lat and long
+
+clean_tokyo_listings_df
+
+clean_tokyo_listings_df['room_type'].unique()
+
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+room_type_pop =clean_tokyo_listings_df['room_type'].value_counts()     #popularity of types of room
+clean_tokyo_listings_df['room_type'].value_counts().index
+
+plt.figure(figsize=(12,12))
+plt.pie(room_type_pop, labels=room_type_pop,autopct = '%1.1f%%', startangle=90)       #autopic show percentage; 1 one decimal
+plt.legend(clean_tokyo_listings_df['room_type'].value_counts().index,title='Room Category')
+plt.title('Room Popularity')
+
+neighbour_pop =clean_tokyo_listings_df['neighbourhood'].value_counts()[clean_tokyo_listings_df['neighbourhood'].value_counts()>100]
+#filter neighbourhoods with at least 100 activities
+
+neighbour_pop.count()
+neighbour_pop.index
+
+plt.figure(figsize=(20,12))
+plt.bar(neighbour_pop, height=neighbour_pop, width=15) 
+plt.legend(neighbour_pop.index, title= 'Neighbourhood')
+plt.title('Neighbourhood Popularity')
 
