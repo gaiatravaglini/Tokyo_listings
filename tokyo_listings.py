@@ -35,37 +35,65 @@ tokyo_listings_df.info()
 
 tokyo_listings_df.describe()
 
-clean_tokyo_listings_df = tokyo_listings_df.fillna({'last_review':0,'license':0,'host_name':0,'reviews_per_month':0}, inplace=False)
+tokyo_listings_df.fillna({'last_review':0,'license':0,'host_name':0,'reviews_per_month':0}, inplace=False)
 
 
-clean_tokyo_listings_df.isnull().sum()
+tokyo_listings_df.isnull().sum()
 
 #For data exploration, we can drop the unuseful columns 
 #correlation between price, min nights, room_type,neighbourhood,number_of_reviews, reviwews per month, availability 365 ; the other columns can be removed except id,host_id,lat and long
 
-clean_tokyo_listings_df
+filtered_tokyo_listings_df=tokyo_listings_df[['id','host_id','neighbourhood','latitude','longitude','room_type','price','minimum_nights','availability_365']]
 
-clean_tokyo_listings_df['room_type'].unique()
+filtered_tokyo_listings_df['room_type'].unique()
 
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-room_type_pop =clean_tokyo_listings_df['room_type'].value_counts()     #popularity of types of room
-clean_tokyo_listings_df['room_type'].value_counts().index
+room_type_pop =filtered_tokyo_listings_df['room_type'].value_counts()     #popularity of types of room
+filtered_tokyo_listings_df['room_type'].value_counts().index
 
 plt.figure(figsize=(12,12))
 plt.pie(room_type_pop, labels=room_type_pop,autopct = '%1.1f%%', startangle=90)       #autopic show percentage; 1 one decimal
-plt.legend(clean_tokyo_listings_df['room_type'].value_counts().index,title='Room Category')
+plt.legend(filtered_tokyo_listings_df['room_type'].value_counts().index,title='Room Category')
 plt.title('Room Popularity')
 
-neighbour_pop =clean_tokyo_listings_df['neighbourhood'].value_counts()[clean_tokyo_listings_df['neighbourhood'].value_counts()>100]
+neighbour_pop =filtered_tokyo_listings_df['neighbourhood'].value_counts()[filtered_tokyo_listings_df['neighbourhood'].value_counts()>200]
 #filter neighbourhoods with at least 100 activities
 
 neighbour_pop.count()
 neighbour_pop.index
 
 plt.figure(figsize=(20,12))
-plt.bar(neighbour_pop, height=neighbour_pop, width=15) 
-plt.legend(neighbour_pop.index, title= 'Neighbourhood')
+plt.pie(neighbour_pop, labels=neighbour_pop, autopct = '%1.1f%%', startangle=100)       #autopic show percentage; 1 one decimal
+plt.legend(neighbour_pop.index)
 plt.title('Neighbourhood Popularity')
+
+list1=filtered_tokyo_listings_df['neighbourhood'].value_counts()
+
+list2=filtered_tokyo_listings_df['price'].groupby(filtered_tokyo_listings_df['neighbourhood']).mean()
+
+pop_neigh= pd.concat([list1,list2],axis=1).head(10)
+pop_neigh=pop_neigh.reset_index()
+pop_neigh= pop_neigh.rename(columns={'neighbourhood':'count','index':'neighbourhood'})
+pop_neigh=pop_neigh.sort_values(by='price', ascending=False)
+
+plt.figure(figsize=(20,12))
+fig3=sns.barplot(data=pop_neigh, x='neighbourhood',y='price',palette='Pastel1_d')
+fig3.set_title('Average Price per Neighbourhood')
+fig3.set_ylabel('Average Price')
+fig3.set_xlabel('Neighbourhood')
+
+#the plot the distribution of the average plot per neighbourhood
+
+df=filtered_tokyo_listings_df
+
+pop_neigh['neighbourhood'].unique()
+
+df2=df.loc[df['neighbourhood'].isin(['Chuo Ku',
+       'Minato Ku', 'Toshima Ku', 'Sumida Ku', 'Shibuya Ku',
+       'Shinjuku Ku', 'Nakano Ku', 'Taito Ku', 'Setagaya Ku',
+       'Ota Ku'])]
+
+sns.catplot(x='neighbourhood', col='room_type', data=df2, kind='count', aspect=20/15.5)
 
