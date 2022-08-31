@@ -9,7 +9,6 @@ Original file is located at
 
 import pandas as pd
 import numpy as np
-import matplotlib as
 
 tokyo_listings_df =pd.read_csv('listings.csv', na_values='')
 tokyo_listings_df
@@ -44,7 +43,9 @@ tokyo_listings_df.isnull().sum()
 #For data exploration, we can drop the unuseful columns 
 #correlation between price, min nights, room_type,neighbourhood,number_of_reviews, reviwews per month, availability 365 ; the other columns can be removed except id,host_id,lat and long
 
-filtered_tokyo_listings_df=tokyo_listings_df[['id','host_id','neighbourhood','latitude','longitude','room_type','price','minimum_nights','availability_365']]
+filtered_tokyo_listings_df=tokyo_listings_df[['name','id','host_id','neighbourhood','latitude','longitude','room_type','price','minimum_nights','availability_365']]
+
+"""#Data Exploration"""
 
 filtered_tokyo_listings_df['room_type'].unique()
 
@@ -74,7 +75,7 @@ plt.title('Neighbourhood Popularity')
 
 list1=filtered_tokyo_listings_df['neighbourhood'].value_counts()
 
-df2=df.loc[df['neighbourhood'].isin(['Chuo Ku', 'Arakawa Ku', 'Edogawa Ku', 'Katsushika Ku',
+df2=filtered_tokyo_listings_df.loc[filtered_tokyo_listings_df['neighbourhood'].isin(['Chuo Ku', 'Arakawa Ku', 'Edogawa Ku', 'Katsushika Ku',
        'Minato Ku', 'Toshima Ku', 'Sumida Ku', 'Shibuya Ku',
        'Shinjuku Ku', 'Nakano Ku', 'Taito Ku', 'Setagaya Ku', 'Kita Ku',
        'Ota Ku'])]
@@ -96,7 +97,7 @@ fig3.set_xlabel('Neighbourhood')
 
 pop_neigh['neighbourhood'].unique()
 
-df2=df.loc[df['neighbourhood'].isin(['Chuo Ku', 'Arakawa Ku', 'Edogawa Ku', 'Katsushika Ku',
+df2=filtered_tokyo_listings_df.loc[filtered_tokyo_listings_df['neighbourhood'].isin(['Chuo Ku', 'Arakawa Ku', 'Edogawa Ku', 'Katsushika Ku',
        'Minato Ku', 'Toshima Ku', 'Sumida Ku', 'Shibuya Ku',
        'Shinjuku Ku', 'Nakano Ku', 'Taito Ku', 'Setagaya Ku', 'Kita Ku',
        'Ota Ku'])]
@@ -114,17 +115,63 @@ u=sns.scatterplot(df2.longitude,df2.latitude,hue=df2.neighbourhood)
 u.legend(loc='right', bbox_to_anchor=(1.25, 0.5), ncol=1)
 
 plt.figure(figsize=(10,6))
-ax=plt.scatter(df.longitude, df.latitude, c=df.price, cmap='summer', edgecolor='black', linewidth=1, alpha=0.75)
+ax=plt.scatter(df2.longitude, df2.latitude, c=df2.price, cmap='summer', edgecolor='black', linewidth=1, alpha=0.75)
 
 ax.ticklabel_format(style='plain')
+
+import plotly.express as px
+
+df2
+
+import folium
+from folium import plugins
+
+df2
+
+df2
+
+m = folium.Map([40 ,-73], zoom_start=3,width="%100",height="%100")
+locations = list(zip(df2.latitude, df2.longitude))
+cluster = plugins.MarkerCluster(locations=locations,popups=df2["neighbourhood"].tolist())
+m.add_child(cluster)
+m
+
+df2
+
+fig=px.scatter_mapbox(data_frame=df2,
+                      lat="latitude",
+                      lon="longitude",
+                      color="neighbourhood",
+                    hover_data=["name"],
+                     hover_name="neighbourhood",
+                     height=600,
+                      width=700,zoom=9.5
+                     );
+
+fig.update_layout(mapbox_style="open-street-map")
+fig.update_layout(margin={"r":0,"t":1,"l":0,"b":0})
+fig.show()
+
+fig=px.scatter_mapbox(data_frame=df2,
+                      lat="latitude",
+                      lon="longitude",
+                      color="price",
+                    hover_data=["name"],
+                     hover_name="neighbourhood",
+                     height=400,
+                      width=600,
+                     size="price", zoom=10);
+
+
+fig.update_layout(mapbox_style="open-street-map")
+fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})  #margins of the map
+fig.show()
 
 df2['price'].max()
 
 df=filtered_tokyo_listings_df
 
 df['price'].astype(int)
-
-df2
 
 import matplotlib as lb
 
