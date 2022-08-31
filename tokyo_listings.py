@@ -9,6 +9,7 @@ Original file is located at
 
 import pandas as pd
 import numpy as np
+import matplotlib as
 
 tokyo_listings_df =pd.read_csv('listings.csv', na_values='')
 tokyo_listings_df
@@ -47,8 +48,10 @@ filtered_tokyo_listings_df=tokyo_listings_df[['id','host_id','neighbourhood','la
 
 filtered_tokyo_listings_df['room_type'].unique()
 
+# Commented out IPython magic to ensure Python compatibility.
 import seaborn as sns
 import matplotlib.pyplot as plt
+# %matplotlib inline
 
 room_type_pop =filtered_tokyo_listings_df['room_type'].value_counts()     #popularity of types of room
 filtered_tokyo_listings_df['room_type'].value_counts().index
@@ -71,9 +74,14 @@ plt.title('Neighbourhood Popularity')
 
 list1=filtered_tokyo_listings_df['neighbourhood'].value_counts()
 
-list2=filtered_tokyo_listings_df['price'].groupby(filtered_tokyo_listings_df['neighbourhood']).mean()
+df2=df.loc[df['neighbourhood'].isin(['Chuo Ku', 'Arakawa Ku', 'Edogawa Ku', 'Katsushika Ku',
+       'Minato Ku', 'Toshima Ku', 'Sumida Ku', 'Shibuya Ku',
+       'Shinjuku Ku', 'Nakano Ku', 'Taito Ku', 'Setagaya Ku', 'Kita Ku',
+       'Ota Ku'])]
 
-pop_neigh= pd.concat([list1,list2],axis=1).head(10)
+list2=df2['price'].groupby(df2['neighbourhood']).mean()
+
+pop_neigh= pd.concat([list1,list2],axis=1).head(14)
 pop_neigh=pop_neigh.reset_index()
 pop_neigh= pop_neigh.rename(columns={'neighbourhood':'count','index':'neighbourhood'})
 pop_neigh=pop_neigh.sort_values(by='price', ascending=False)
@@ -86,14 +94,45 @@ fig3.set_xlabel('Neighbourhood')
 
 #the plot the distribution of the average plot per neighbourhood
 
-df=filtered_tokyo_listings_df
-
 pop_neigh['neighbourhood'].unique()
 
-df2=df.loc[df['neighbourhood'].isin(['Chuo Ku',
+df2=df.loc[df['neighbourhood'].isin(['Chuo Ku', 'Arakawa Ku', 'Edogawa Ku', 'Katsushika Ku',
        'Minato Ku', 'Toshima Ku', 'Sumida Ku', 'Shibuya Ku',
-       'Shinjuku Ku', 'Nakano Ku', 'Taito Ku', 'Setagaya Ku',
+       'Shinjuku Ku', 'Nakano Ku', 'Taito Ku', 'Setagaya Ku', 'Kita Ku',
        'Ota Ku'])]
 
-sns.catplot(x='neighbourhood', col='room_type', data=df2, kind='count', aspect=20/15.5)
+g= sns.catplot(x='room_type', col='neighbourhood',col_wrap=4, data=df2, kind='count', height=5)
+g.set_axis_labels("",'Room Count')
+g.despine(left=True)
+g.set_xticklabels(rotation=90)
+plt.figure(figsize=(20,10))
+
+#the plot show the popularity of each type of room for the main considered neighbourhood
+
+plt.figure(figsize=(10,6))
+u=sns.scatterplot(df2.longitude,df2.latitude,hue=df2.neighbourhood)
+u.legend(loc='right', bbox_to_anchor=(1.25, 0.5), ncol=1)
+
+plt.figure(figsize=(10,6))
+ax=plt.scatter(df.longitude, df.latitude, c=df.price, cmap='summer', edgecolor='black', linewidth=1, alpha=0.75)
+
+ax.ticklabel_format(style='plain')
+
+df2['price'].max()
+
+df=filtered_tokyo_listings_df
+
+df['price'].astype(int)
+
+df2
+
+import matplotlib as lb
+
+plt.figure(figsize=(20,10))
+
+fig5=sns.boxplot(data=df2, x='neighbourhood',y='price')
+fig5.get_yaxis().set_major_formatter(lb.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+plt.ylim(0,100000)
+
+df2['price'].groupby(df2['neighbourhood']).describe()
 
