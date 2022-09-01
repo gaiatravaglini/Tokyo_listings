@@ -9,6 +9,13 @@ Original file is located at
 
 import pandas as pd
 import numpy as np
+import plotly.express as px
+import seaborn as sns
+import matplotlib.pyplot as plt
+import matplotlib as lb
+
+import folium
+from folium import plugins
 
 tokyo_listings_df =pd.read_csv('listings.csv', na_values='')
 tokyo_listings_df
@@ -17,7 +24,7 @@ tokyo_listings_df.columns
 
 tokyo_listings_df.shape
 
-tokyo_listings_df.info()
+tokyo_listings_df.describe()
 
 """#Data Cleaning
 
@@ -33,37 +40,44 @@ tokyo_listings_df.info()
 
 #There are some attributes which contains null values; replace with 0 or mean
 
-tokyo_listings_df.describe()
-
-tokyo_listings_df.fillna({'last_review':0,'license':0,'host_name':0,'reviews_per_month':0}, inplace=False)
+tokyo_listings_df.fillna({'last_review':0,'license':0,'host_name':0,'reviews_per_month':0}, inplace=True)
 
 
 tokyo_listings_df.isnull().sum()
 
+tokyo_listings_df.duplicated().sum()   #there are no duplicated rows
+
 #For data exploration, we can drop the unuseful columns 
 #correlation between price, min nights, room_type,neighbourhood,number_of_reviews, reviwews per month, availability 365 ; the other columns can be removed except id,host_id,lat and long
 
-filtered_tokyo_listings_df=tokyo_listings_df[['name','id','host_id','neighbourhood','latitude','longitude','room_type','price','minimum_nights','availability_365']]
+filtered_tokyo_listings_df=tokyo_listings_df[['name','id','host_id','host_name','neighbourhood','latitude','longitude','room_type','price','minimum_nights','availability_365']]
 
 """#Data Exploration"""
 
-filtered_tokyo_listings_df['room_type'].unique()
+#host popularity - room popularity - neigh popularity (+map)
+#popularity means total number of
 
-# Commented out IPython magic to ensure Python compatibility.
-import seaborn as sns
-import matplotlib.pyplot as plt
-# %matplotlib inline
+"""## Hosts with the highest number of listings activities"""
 
-room_type_pop =filtered_tokyo_listings_df['room_type'].value_counts()     #popularity of types of room
-filtered_tokyo_listings_df['room_type'].value_counts().index
+popular_host=filtered_tokyo_listings_df['host_id'].value_counts().head(14)
+popular_host=popular_host.reset_index()
+popular_host=popular_host.rename(columns={'index':'host_id','host_id':'listings_count'})
 
-plt.figure(figsize=(12,12))
-plt.pie(room_type_pop, labels=room_type_pop,autopct = '%1.1f%%', startangle=90)       #autopic show percentage; 1 one decimal
-plt.legend(filtered_tokyo_listings_df['room_type'].value_counts().index,title='Room Category')
-plt.title('Room Popularity')
+order_listings=popular_host.groupby('host_id')['listings_count'].sum().sort_values(ascending=False).index.values
+
+plt.figure(figsize=(20,12))
+fig1=sns.barplot(data=popular_host, x='host_id',y='listings_count',palette='Pastel1_d',order=order_listings)
+fig1.set_title('Number of Activities per Host')
+fig1.set_ylabel('Number of listings')
+fig1.set_xlabel('Host Id')
+plt.show()
+
+#host with most listings activity in Tokyo
+
+"""## Neighbourhood in Tokyo with the highest number of listings"""
 
 neighbour_pop =filtered_tokyo_listings_df['neighbourhood'].value_counts()[filtered_tokyo_listings_df['neighbourhood'].value_counts()>200]
-#filter neighbourhoods with at least 100 activities
+#filter neighbourhoods with at least 200 activities
 
 neighbour_pop.count()
 neighbour_pop.index
@@ -72,73 +86,14 @@ plt.figure(figsize=(20,12))
 plt.pie(neighbour_pop, labels=neighbour_pop, autopct = '%1.1f%%', startangle=100)       #autopic show percentage; 1 one decimal
 plt.legend(neighbour_pop.index)
 plt.title('Neighbourhood Popularity')
+plt.show()
 
-list1=filtered_tokyo_listings_df['neighbourhood'].value_counts()
-
-df2=filtered_tokyo_listings_df.loc[filtered_tokyo_listings_df['neighbourhood'].isin(['Chuo Ku', 'Arakawa Ku', 'Edogawa Ku', 'Katsushika Ku',
+top_neigh=filtered_tokyo_listings_df.loc[filtered_tokyo_listings_df['neighbourhood'].isin(['Chuo Ku', 'Arakawa Ku', 'Edogawa Ku', 'Katsushika Ku',
        'Minato Ku', 'Toshima Ku', 'Sumida Ku', 'Shibuya Ku',
        'Shinjuku Ku', 'Nakano Ku', 'Taito Ku', 'Setagaya Ku', 'Kita Ku',
        'Ota Ku'])]
 
-list2=df2['price'].groupby(df2['neighbourhood']).mean()
-
-pop_neigh= pd.concat([list1,list2],axis=1).head(14)
-pop_neigh=pop_neigh.reset_index()
-pop_neigh= pop_neigh.rename(columns={'neighbourhood':'count','index':'neighbourhood'})
-pop_neigh=pop_neigh.sort_values(by='price', ascending=False)
-
-plt.figure(figsize=(20,12))
-fig3=sns.barplot(data=pop_neigh, x='neighbourhood',y='price',palette='Pastel1_d')
-fig3.set_title('Average Price per Neighbourhood')
-fig3.set_ylabel('Average Price')
-fig3.set_xlabel('Neighbourhood')
-
-#the plot the distribution of the average plot per neighbourhood
-
-pop_neigh['neighbourhood'].unique()
-
-df2=filtered_tokyo_listings_df.loc[filtered_tokyo_listings_df['neighbourhood'].isin(['Chuo Ku', 'Arakawa Ku', 'Edogawa Ku', 'Katsushika Ku',
-       'Minato Ku', 'Toshima Ku', 'Sumida Ku', 'Shibuya Ku',
-       'Shinjuku Ku', 'Nakano Ku', 'Taito Ku', 'Setagaya Ku', 'Kita Ku',
-       'Ota Ku'])]
-
-g= sns.catplot(x='room_type', col='neighbourhood',col_wrap=4, data=df2, kind='count', height=5)
-g.set_axis_labels("",'Room Count')
-g.despine(left=True)
-g.set_xticklabels(rotation=90)
-plt.figure(figsize=(20,10))
-
-#the plot show the popularity of each type of room for the main considered neighbourhood
-
-plt.figure(figsize=(10,6))
-u=sns.scatterplot(df2.longitude,df2.latitude,hue=df2.neighbourhood)
-u.legend(loc='right', bbox_to_anchor=(1.25, 0.5), ncol=1)
-
-plt.figure(figsize=(10,6))
-ax=plt.scatter(df2.longitude, df2.latitude, c=df2.price, cmap='summer', edgecolor='black', linewidth=1, alpha=0.75)
-
-ax.ticklabel_format(style='plain')
-
-import plotly.express as px
-
-df2
-
-import folium
-from folium import plugins
-
-df2
-
-df2
-
-m = folium.Map([40 ,-73], zoom_start=3,width="%100",height="%100")
-locations = list(zip(df2.latitude, df2.longitude))
-cluster = plugins.MarkerCluster(locations=locations,popups=df2["neighbourhood"].tolist())
-m.add_child(cluster)
-m
-
-df2
-
-fig=px.scatter_mapbox(data_frame=df2,
+fig3=px.scatter_mapbox(data_frame=top_neigh,
                       lat="latitude",
                       lon="longitude",
                       color="neighbourhood",
@@ -148,11 +103,93 @@ fig=px.scatter_mapbox(data_frame=df2,
                       width=700,zoom=9.5
                      );
 
-fig.update_layout(mapbox_style="open-street-map")
-fig.update_layout(margin={"r":0,"t":1,"l":0,"b":0})
-fig.show()
+fig3.update_layout(mapbox_style="carto-positron")
+fig3.update_layout(margin={"r":0,"t":1,"l":0,"b":0})
+fig3.show()
 
-fig=px.scatter_mapbox(data_frame=df2,
+"""## Accomodation popularity in Tokyo"""
+
+room_type_pop =filtered_tokyo_listings_df['room_type'].value_counts()     #popularity of types of room
+filtered_tokyo_listings_df['room_type'].value_counts().index
+
+plt.figure(figsize=(12,12))
+plt.pie(room_type_pop, labels=room_type_pop,autopct = '%1.1f%%', startangle=90)       #autopic show percentage; 1 one decimal
+plt.legend(filtered_tokyo_listings_df['room_type'].value_counts().index,title='Room Category')
+plt.title('Room Popularity')
+plt.show()
+
+"""Popularity of accomodation (for each type) in top neighbourhoods"""
+
+top_neigh.neighbourhood=pd.Categorical(top_neigh.neighbourhood, sorted(top_neigh.neighbourhood.unique()), ordered=True)  #reorder neigh in alphabetical technique
+
+plt.figure(figsize=(20,10))
+fig5= sns.catplot(x='room_type', col='neighbourhood',col_wrap=4, data=top_neigh, kind='count', height=5)
+fig5.set_axis_labels("",'Room Count')
+fig5.despine(left=True)
+fig5.set_xticklabels(rotation=90)
+plt.show()
+
+
+#the plot show the popularity of each type of room for the main considered neighbourhood
+
+"""## Average price of an accomodation in top neighbourhoods"""
+
+#avg price x neigh - avg price per type of room - pop of room per neigh - distribution of price per neigh
+
+list1=filtered_tokyo_listings_df['neighbourhood'].value_counts()
+
+list2=top_neigh['price'].groupby(top_neigh['neighbourhood']).mean()
+
+pop_neigh= pd.concat([list1,list2],axis=1).head(14)
+pop_neigh=pop_neigh.reset_index()
+pop_neigh= pop_neigh.rename(columns={'neighbourhood':'count','index':'neighbourhood'})
+pop_neigh=pop_neigh.sort_values(by='price', ascending=False)
+
+plt.figure(figsize=(20,12))
+fig6=sns.barplot(data=pop_neigh, x='neighbourhood',y='price',palette='Pastel1_d')
+fig6.set_title('Average Price per Neighbourhood')
+fig6.set_ylabel('Average Price')
+fig6.set_xlabel('Neighbourhood')
+plt.show()
+
+#the plot the distribution of the average price per neighbourhood
+
+"""## Average price for each accomodation type in top neighbourhoods"""
+
+#average price per room_type
+
+avgprice_room=top_neigh.groupby(['neighbourhood','room_type'])['price'].mean()
+avgprice_room=avgprice_room.reset_index()
+avgprice_room    #hotel room for Shibuya has no value, we can drop it
+
+i=avgprice_room[((avgprice_room.neighbourhood == 'Shibuya Ku') &(avgprice_room.room_type == 'Hotel room'))].index  #get the index in the dataframe
+
+avgprice_room=avgprice_room.drop(i)
+
+avgprice_room  #no more mean=0
+
+check_mean=top_neigh.loc[(top_neigh['neighbourhood'] == 'Taito Ku') & (top_neigh['room_type'] == 'Shared room')]
+
+check_mean['price'].mean()  #the previous code is right
+
+plt.figure(figsize=(20,10))
+fig7= sns.catplot(x='room_type',y='price', col='neighbourhood',col_wrap=4,kind='bar', data=avgprice_room , height=5)
+fig7.set_axis_labels("",'Average Price')
+fig7.despine(left=True)
+fig7.set_xticklabels(rotation=90)
+plt.show()
+
+"""## Distribution of price for each top neighbourhood"""
+
+plt.figure(figsize=(20,10))
+fig8=sns.boxplot(data=top_neigh, x='neighbourhood',y='price')
+fig8.get_yaxis().set_major_formatter(lb.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
+plt.ylim(0,100000)
+plt.show()
+
+top_neigh['price'].groupby(top_neigh['neighbourhood']).describe()   #check statistics
+
+fig9=px.scatter_mapbox(data_frame=top_neigh,
                       lat="latitude",
                       lon="longitude",
                       color="price",
@@ -163,23 +200,7 @@ fig=px.scatter_mapbox(data_frame=df2,
                      size="price", zoom=10);
 
 
-fig.update_layout(mapbox_style="open-street-map")
-fig.update_layout(margin={"r":0,"t":0,"l":0,"b":0})  #margins of the map
-fig.show()
-
-df2['price'].max()
-
-df=filtered_tokyo_listings_df
-
-df['price'].astype(int)
-
-import matplotlib as lb
-
-plt.figure(figsize=(20,10))
-
-fig5=sns.boxplot(data=df2, x='neighbourhood',y='price')
-fig5.get_yaxis().set_major_formatter(lb.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
-plt.ylim(0,100000)
-
-df2['price'].groupby(df2['neighbourhood']).describe()
+fig9.update_layout(mapbox_style="carto-positron")
+fig9.update_layout(margin={"r":0,"t":0,"l":0,"b":0})  #margins of the map
+fig9.show()
 
