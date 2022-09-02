@@ -50,7 +50,7 @@ tokyo_listings_df.duplicated().sum()   #there are no duplicated rows
 #For data exploration, we can drop the unuseful columns 
 #correlation between price, min nights, room_type,neighbourhood,number_of_reviews, reviwews per month, availability 365 ; the other columns can be removed except id,host_id,lat and long
 
-filtered_tokyo_listings_df=tokyo_listings_df[['name','id','host_id','host_name','neighbourhood','latitude','longitude','room_type','price','minimum_nights','availability_365']]
+filtered_tokyo_listings_df=tokyo_listings_df[['name','id','host_id','host_name','neighbourhood','latitude','longitude','room_type','price','minimum_nights','number_of_reviews']]
 
 """#Data Exploration"""
 
@@ -93,10 +93,10 @@ top_neigh=filtered_tokyo_listings_df.loc[filtered_tokyo_listings_df['neighbourho
        'Shinjuku Ku', 'Nakano Ku', 'Taito Ku', 'Setagaya Ku', 'Kita Ku',
        'Ota Ku'])]
 
-fig3=px.scatter_mapbox(data_frame=top_neigh,
+fig3 =px.scatter_mapbox(data_frame=top_neigh,
                       lat="latitude",
                       lon="longitude",
-                      color="neighbourhood",
+                      color='neighbourhood',
                     hover_data=["name"],
                      hover_name="neighbourhood",
                      height=600,
@@ -144,6 +144,7 @@ pop_neigh= pd.concat([list1,list2],axis=1).head(14)
 pop_neigh=pop_neigh.reset_index()
 pop_neigh= pop_neigh.rename(columns={'neighbourhood':'count','index':'neighbourhood'})
 pop_neigh=pop_neigh.sort_values(by='price', ascending=False)
+pop_neigh
 
 plt.figure(figsize=(20,12))
 fig6=sns.barplot(data=pop_neigh, x='neighbourhood',y='price',palette='Pastel1_d')
@@ -203,4 +204,85 @@ fig9=px.scatter_mapbox(data_frame=top_neigh,
 fig9.update_layout(mapbox_style="carto-positron")
 fig9.update_layout(margin={"r":0,"t":0,"l":0,"b":0})  #margins of the map
 fig9.show()
+
+"""#Clustering"""
+
+filtered_tokyo_listings_df.columns
+
+from sklearn.cluster import KMeans
+
+
+
+plt.figure(figsize=(20,10))
+plt.scatter(filtered_tokyo_listings_df['number_of_reviews'], filtered_tokyo_listings_df['price'])
+plt.xlabel('Total number of Reviews')
+plt.ylabel('Price')
+plt.xticks(list(range(0,700,20)))
+plt.ticklabel_format(style='plain')
+
+square_distances = []
+x = filtered_tokyo_listings_df[['number_of_reviews','price']]
+for i in range(1, 11):
+    km = KMeans(n_clusters=i, random_state=42)
+    km.fit(x)
+    square_distances.append(km.inertia_)
+
+plt.figure(figsize=(10, 6))
+plt.plot(range(1,11), square_distances, 'bx-')
+plt.xlabel('K')
+plt.ylabel('inertia')
+plt.title('Elbow Method')
+plt.xticks(list(range(1,11)))
+plt.show()
+
+km = KMeans(n_clusters=3, random_state=42)
+y_pred = km.fit_predict(x)
+
+plt.figure(figsize=(20,10))
+
+for i in range(3):
+    plt.scatter(x.loc[y_pred==i, 'number_of_reviews'], x.loc[y_pred==i, 'price'])
+
+plt.yticks(list(range(0,1200001,100000)))
+plt.xticks(list(range(0,700,20)))
+plt.ticklabel_format(style='plain')
+plt.xlabel('Total Reviews')
+plt.ylabel('Price')
+
+plt.scatter(km.cluster_centers_[:,0], km.cluster_centers_[:,1], s=250, marker='*', c='red', edgecolors='black', label='centroids')
+
+km.cluster_centers_
+
+plt.figure(figsize=(20,10))
+plt.scatter(filtered_tokyo_listings_df['longitude'], filtered_tokyo_listings_df['latitude'])
+plt.xlabel('Latitude')
+plt.ylabel('Longitude')
+
+square_distances = []
+x = filtered_tokyo_listings_df[['longitude','latitude']]
+for i in range(1, 11):
+    km = KMeans(n_clusters=i, random_state=42)
+    km.fit(x)
+    square_distances.append(km.inertia_)
+
+plt.figure(figsize=(10, 6))
+plt.plot(range(1,11), square_distances, 'bx-')
+plt.xlabel('K')
+plt.ylabel('inertia')
+plt.title('Elbow Method')
+plt.xticks(list(range(1,11)))
+plt.show()
+
+km = KMeans(n_clusters=4, random_state=42)
+y_pred = km.fit_predict(x)
+
+plt.figure(figsize=(20,10))
+
+for i in range(4):
+    plt.scatter(x.loc[y_pred==i, 'longitude'], x.loc[y_pred==i, 'latitude'])
+
+plt.xlabel('Latitude')
+plt.ylabel('Longitude')
+
+plt.scatter(km.cluster_centers_[:,0], km.cluster_centers_[:,1], s=250, marker='.', c='black', edgecolors='black', label='centroids')
 
