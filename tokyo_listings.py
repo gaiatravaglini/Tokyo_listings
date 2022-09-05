@@ -8,6 +8,7 @@ Original file is located at
 """
 
 import pandas as pd
+pd.options.display.float_format = '{:.2f}'.format
 import numpy as np
 import plotly.express as px
 import seaborn as sns
@@ -24,42 +25,36 @@ tokyo_listings_df.columns
 
 tokyo_listings_df.shape
 
-tokyo_listings_df.describe()
-
 """#Data Cleaning
 
 """
 
-#neighbourhood_group has no values; it can be removed
-
-tokyo_listings_df.drop('neighbourhood_group', axis=1,inplace=True)
-
-tokyo_listings_df #There is no neighbourhood_group
+tokyo_listings_df.duplicated().sum()   #there are no duplicated rows
 
 tokyo_listings_df.info()
 
-#There are some attributes which contains null values; replace with 0 or mean
+tokyo_listings_df.drop(['neighbourhood_group','last_review','reviews_per_month','calculated_host_listings_count','number_of_reviews_ltm','license'], axis=1,inplace=True)
 
-tokyo_listings_df.fillna({'last_review':0,'license':0,'host_name':0,'reviews_per_month':0}, inplace=True)
+tokyo_listings_df.info()
 
+#Since host_name is a categorical attribute, it can be replaced with 0
 
+tokyo_listings_df.fillna({'host_name':0}, inplace=True)
 tokyo_listings_df.isnull().sum()
-
-tokyo_listings_df.duplicated().sum()   #there are no duplicated rows
-
-#For data exploration, we can drop the unuseful columns 
-#correlation between price, min nights, room_type,neighbourhood,number_of_reviews, reviwews per month, availability 365 ; the other columns can be removed except id,host_id,lat and long
-
-filtered_tokyo_listings_df=tokyo_listings_df[['name','id','host_id','host_name','neighbourhood','latitude','longitude','room_type','price','minimum_nights','number_of_reviews']]
 
 """#Data Exploration"""
 
-#host popularity - room popularity - neigh popularity (+map)
-#popularity means total number of
+tokyo_listings_df.describe()
 
-"""## Hosts with the highest number of listings activities"""
+tokyo_listings_df.describe(include=['O'])
 
-popular_host=filtered_tokyo_listings_df['host_id'].value_counts().head(14)
+tokyo_listings_corr=tokyo_listings_df.corr()
+
+sns.heatmap(tokyo_listings_corr, annot=True)
+
+"""Hosts with the highest number of listings activities"""
+
+popular_host=tokyo_listings_df['host_id'].value_counts().head(14)
 popular_host=popular_host.reset_index()
 popular_host=popular_host.rename(columns={'index':'host_id','host_id':'listings_count'})
 
@@ -74,21 +69,20 @@ plt.show()
 
 #host with most listings activity in Tokyo
 
-"""## Neighbourhood in Tokyo with the highest number of listings"""
+"""Neighbourhood in Tokyo with the highest number of listings"""
 
-neighbour_pop =filtered_tokyo_listings_df['neighbourhood'].value_counts()[filtered_tokyo_listings_df['neighbourhood'].value_counts()>200]
+neighbour_pop =tokyo_listings_df['neighbourhood'].value_counts()[tokyo_listings_df['neighbourhood'].value_counts()>200]
 #filter neighbourhoods with at least 200 activities
 
 neighbour_pop.count()
-neighbour_pop.index
 
 plt.figure(figsize=(20,12))
 plt.pie(neighbour_pop, labels=neighbour_pop, autopct = '%1.1f%%', startangle=100)       #autopic show percentage; 1 one decimal
-plt.legend(neighbour_pop.index)
+plt.legend(neighbour_pop.index,)
 plt.title('Neighbourhood Popularity')
 plt.show()
 
-top_neigh=filtered_tokyo_listings_df.loc[filtered_tokyo_listings_df['neighbourhood'].isin(['Chuo Ku', 'Arakawa Ku', 'Edogawa Ku', 'Katsushika Ku',
+top_neigh=tokyo_listings_df.loc[tokyo_listings_df['neighbourhood'].isin(['Chuo Ku', 'Arakawa Ku', 'Edogawa Ku', 'Katsushika Ku',
        'Minato Ku', 'Toshima Ku', 'Sumida Ku', 'Shibuya Ku',
        'Shinjuku Ku', 'Nakano Ku', 'Taito Ku', 'Setagaya Ku', 'Kita Ku',
        'Ota Ku'])]
@@ -99,22 +93,20 @@ fig3 =px.scatter_mapbox(data_frame=top_neigh,
                       color='neighbourhood',
                     hover_data=["name"],
                      hover_name="neighbourhood",
-                     height=600,
-                      width=700,zoom=9.5
-                     );
+                     height=400,
+                      width=600,zoom=9.5)
+                     
 
 fig3.update_layout(mapbox_style="carto-positron")
 fig3.update_layout(margin={"r":0,"t":1,"l":0,"b":0})
-fig3.show()
 
-"""## Accomodation popularity in Tokyo"""
+"""Accomodation popularity in Tokyo"""
 
-room_type_pop =filtered_tokyo_listings_df['room_type'].value_counts()     #popularity of types of room
-filtered_tokyo_listings_df['room_type'].value_counts().index
+room_type_pop =tokyo_listings_df['room_type'].value_counts()     #popularity of types of room
 
 plt.figure(figsize=(12,12))
 plt.pie(room_type_pop, labels=room_type_pop,autopct = '%1.1f%%', startangle=90)       #autopic show percentage; 1 one decimal
-plt.legend(filtered_tokyo_listings_df['room_type'].value_counts().index,title='Room Category')
+plt.legend(tokyo_listings_df['room_type'].value_counts().index,title='Room Category')
 plt.title('Room Popularity')
 plt.show()
 
@@ -132,22 +124,24 @@ plt.show()
 
 #the plot show the popularity of each type of room for the main considered neighbourhood
 
-"""## Average price of an accomodation in top neighbourhoods"""
+"""Average price of an accomodation in top neighbourhoods"""
 
-#avg price x neigh - avg price per type of room - pop of room per neigh - distribution of price per neigh
-
-list1=filtered_tokyo_listings_df['neighbourhood'].value_counts()
+list1=top_neigh['neighbourhood'].value_counts()
+list1
 
 list2=top_neigh['price'].groupby(top_neigh['neighbourhood']).mean()
+list2
 
-pop_neigh= pd.concat([list1,list2],axis=1).head(14)
+pop_neigh= pd.concat([list1,list2],axis=1)
 pop_neigh=pop_neigh.reset_index()
 pop_neigh= pop_neigh.rename(columns={'neighbourhood':'count','index':'neighbourhood'})
 pop_neigh=pop_neigh.sort_values(by='price', ascending=False)
 pop_neigh
 
+order_price=pop_neigh.groupby('neighbourhood')['price'].sum().sort_values(ascending=False).index.values
+
 plt.figure(figsize=(20,12))
-fig6=sns.barplot(data=pop_neigh, x='neighbourhood',y='price',palette='Pastel1_d')
+fig6=sns.barplot(data=pop_neigh, x='neighbourhood',y='price',palette='Pastel1_d',order=order_price)
 fig6.set_title('Average Price per Neighbourhood')
 fig6.set_ylabel('Average Price')
 fig6.set_xlabel('Neighbourhood')
@@ -157,8 +151,6 @@ plt.show()
 
 """## Average price for each accomodation type in top neighbourhoods"""
 
-#average price per room_type
-
 avgprice_room=top_neigh.groupby(['neighbourhood','room_type'])['price'].mean()
 avgprice_room=avgprice_room.reset_index()
 avgprice_room    #hotel room for Shibuya has no value, we can drop it
@@ -167,11 +159,7 @@ i=avgprice_room[((avgprice_room.neighbourhood == 'Shibuya Ku') &(avgprice_room.r
 
 avgprice_room=avgprice_room.drop(i)
 
-avgprice_room  #no more mean=0
-
-check_mean=top_neigh.loc[(top_neigh['neighbourhood'] == 'Taito Ku') & (top_neigh['room_type'] == 'Shared room')]
-
-check_mean['price'].mean()  #the previous code is right
+avgprice_room
 
 plt.figure(figsize=(20,10))
 fig7= sns.catplot(x='room_type',y='price', col='neighbourhood',col_wrap=4,kind='bar', data=avgprice_room , height=5)
@@ -180,12 +168,13 @@ fig7.despine(left=True)
 fig7.set_xticklabels(rotation=90)
 plt.show()
 
-"""## Distribution of price for each top neighbourhood"""
+"""Distribution of price for each top neighbourhood"""
 
 plt.figure(figsize=(20,10))
 fig8=sns.boxplot(data=top_neigh, x='neighbourhood',y='price')
 fig8.get_yaxis().set_major_formatter(lb.ticker.FuncFormatter(lambda x, p: format(int(x), ',')))
 plt.ylim(0,100000)
+plt.title('Price Distribution (¥)')
 plt.show()
 
 top_neigh['price'].groupby(top_neigh['neighbourhood']).describe()   #check statistics
@@ -207,21 +196,20 @@ fig9.show()
 
 """#Clustering"""
 
-filtered_tokyo_listings_df.columns
+tokyo_listings_df.columns
 
 from sklearn.cluster import KMeans
 
-
-
 plt.figure(figsize=(20,10))
-plt.scatter(filtered_tokyo_listings_df['number_of_reviews'], filtered_tokyo_listings_df['price'])
+sns.scatterplot(tokyo_listings_df['number_of_reviews'],tokyo_listings_df['price'])
 plt.xlabel('Total number of Reviews')
 plt.ylabel('Price')
 plt.xticks(list(range(0,700,20)))
+plt.yticks(list(range(0,1300000,100000)))
 plt.ticklabel_format(style='plain')
 
 square_distances = []
-x = filtered_tokyo_listings_df[['number_of_reviews','price']]
+x = tokyo_listings_df[['number_of_reviews','price']]
 for i in range(1, 11):
     km = KMeans(n_clusters=i, random_state=42)
     km.fit(x)
@@ -241,7 +229,7 @@ y_pred = km.fit_predict(x)
 plt.figure(figsize=(20,10))
 
 for i in range(3):
-    plt.scatter(x.loc[y_pred==i, 'number_of_reviews'], x.loc[y_pred==i, 'price'])
+    plt.scatter(x.loc[y_pred==i,'number_of_reviews'], x.loc[y_pred==i, 'price'])
 
 plt.yticks(list(range(0,1200001,100000)))
 plt.xticks(list(range(0,700,20)))
@@ -249,17 +237,15 @@ plt.ticklabel_format(style='plain')
 plt.xlabel('Total Reviews')
 plt.ylabel('Price')
 
-plt.scatter(km.cluster_centers_[:,0], km.cluster_centers_[:,1], s=250, marker='*', c='red', edgecolors='black', label='centroids')
-
-km.cluster_centers_
+plt.scatter(km.cluster_centers_[:,0], km.cluster_centers_[:,1], s=250, marker='+', c='black', edgecolors='black', label='centroids')
 
 plt.figure(figsize=(20,10))
-plt.scatter(filtered_tokyo_listings_df['longitude'], filtered_tokyo_listings_df['latitude'])
+plt.scatter(tokyo_listings_df['longitude'], tokyo_listings_df['latitude'])
 plt.xlabel('Latitude')
 plt.ylabel('Longitude')
 
 square_distances = []
-x = filtered_tokyo_listings_df[['longitude','latitude']]
+x = tokyo_listings_df[['longitude','latitude']]
 for i in range(1, 11):
     km = KMeans(n_clusters=i, random_state=42)
     km.fit(x)
@@ -284,5 +270,114 @@ for i in range(4):
 plt.xlabel('Latitude')
 plt.ylabel('Longitude')
 
-plt.scatter(km.cluster_centers_[:,0], km.cluster_centers_[:,1], s=250, marker='.', c='black', edgecolors='black', label='centroids')
+plt.scatter(km.cluster_centers_[:,0], km.cluster_centers_[:,1], s=250, marker='+', c='black', edgecolors='black', label='centroids')
 
+from sklearn.decomposition import PCA
+
+y = tokyo_listings_df['room_type']
+
+x = tokyo_listings_df.drop(['id','host_id','name','host_name','neighbourhood','room_type'], axis=1)
+
+pca=PCA()
+pca.fit(x)
+pca.explained_variance_ratio_
+
+plt.figure(figsize=(10,6))
+plt.plot(range(1,7), pca.explained_variance_ratio_.cumsum(), marker='o',linestyle='--')
+plt.title('Explained Variance by components')
+plt.xlabel('Number of Components')
+plt.ylabel('Cumulative Explained Variance')
+
+pca = PCA(n_components=2)
+x_pca = pca.fit(x).transform(x)
+
+print('Explained variation per principal component: {}'.format(pca.explained_variance_ratio_))
+
+plt.figure(figsize=(10,6))
+labels = y.unique()
+for i in range(len(labels)):
+    plt.scatter(x_pca[y==labels[i], 0], x_pca[y==labels[i], 1], label=labels[i])
+
+plt.xlabel('PC_1')
+plt.ylabel('PC_2')
+plt.legend()
+plt.show()
+
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import KFold
+from sklearn.metrics import accuracy_score
+
+model = RandomForestClassifier(random_state=42)
+accuracies = []
+kf = KFold(n_splits=10, shuffle=True, random_state=42)
+
+for train_index, test_index in kf.split(x_pca, y):
+    x_train, y_train = x_pca[train_index], y.iloc[train_index]
+    x_test, y_test = x_pca[train_index], y.iloc[train_index]
+
+    model.fit(x_train, y_train)
+    y_pred = model.predict(x_test)
+
+    accuracy = accuracy_score(y_pred, y_test)
+
+    accuracies.append(accuracy)
+
+    print('Accuracy = ', accuracy)
+
+"""### Classification"""
+
+from sklearn.model_selection import train_test_split
+
+y = tokyo_listings_df['room_type']
+
+x = tokyo_listings_df.drop(['id','host_id','name','host_name','neighbourhood','room_type'], axis=1)
+
+x_train, x_test, y_train, y_test =train_test_split(x, y, test_size=0.2)  #splits in 4 output
+
+from sklearn.ensemble import RandomForestClassifier
+model = RandomForestClassifier() 
+model.fit(x_train, y_train)
+
+y_pred = model.predict(x_test)
+sum(y_pred == y_test) / len(y_pred)
+
+"""Regression"""
+
+from sklearn.linear_model import LinearRegression
+
+x=tokyo_listings_df.minimum_nights
+y=tokyo_listings_df.price
+
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.2, random_state = 42)
+
+x_train = x_train.to_numpy().reshape(-1, 1)
+x_train #every point on its own raw
+
+model = LinearRegression() 
+model.fit(x_train, y_train)  #fitting a formula to the data -> take all x and y input and understand their function
+
+x_test=x_test.to_numpy().reshape(-1, 1)
+x_test
+
+y_pred=model.predict(x_test)
+y_pred
+#check how it fits x_test
+#y_pred should be close to y_test
+
+df = pd.DataFrame({'Actual': y_test, 
+                  'Predicted': y_pred})
+df.head(10)
+
+plt.figure(figsize=(10,6))
+plt.scatter(x_train, y_train)
+
+plt.scatter(x_test, y_test, c='red')
+
+plt.plot(x_test, y_pred)
+
+plt.figure(figsize=(10,6))
+plt.scatter(x_train, y_train)
+plt.scatter(x_test, y_test, c='red')
+plt.plot(x_test, y_pred)
+
+model.intercept_,model.coef_
