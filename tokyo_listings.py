@@ -10,6 +10,8 @@ Original file is located at
 import pandas as pd
 pd.options.display.float_format = '{:.2f}'.format
 import numpy as np
+np.set_printoptions(suppress=True)
+
 import plotly.express as px
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -78,7 +80,7 @@ neighbour_pop.count()
 
 plt.figure(figsize=(20,12))
 plt.pie(neighbour_pop, labels=neighbour_pop, autopct = '%1.1f%%', startangle=100)       #autopic show percentage; 1 one decimal
-plt.legend(neighbour_pop.index,)
+plt.legend(neighbour_pop.index,loc='center left',bbox_to_anchor=(1, 0.5))
 plt.title('Neighbourhood Popularity')
 plt.show()
 
@@ -122,7 +124,7 @@ fig5.set_xticklabels(rotation=90)
 plt.show()
 
 
-#the plot show the popularity of each type of room for the main considered neighbourhood
+#the plot show the frequency of each type of room for the main considered neighbourhood
 
 """Average price of an accomodation in top neighbourhoods"""
 
@@ -153,7 +155,8 @@ plt.show()
 
 avgprice_room=top_neigh.groupby(['neighbourhood','room_type'])['price'].mean()
 avgprice_room=avgprice_room.reset_index()
-avgprice_room    #hotel room for Shibuya has no value, we can drop it
+
+#hotel room for Shibuya has no value, we can drop it
 
 i=avgprice_room[((avgprice_room.neighbourhood == 'Shibuya Ku') &(avgprice_room.room_type == 'Hotel room'))].index  #get the index in the dataframe
 
@@ -198,18 +201,26 @@ fig9.show()
 
 tokyo_listings_df.columns
 
+tokyo_listings_df.price.describe()
+
 from sklearn.cluster import KMeans
 
+tokyo_listings_df.price.describe()
+#filter prices between 1st and 3rd quartile
+
+df=tokyo_listings_df.loc[(tokyo_listings_df['price'] >=5093) & (tokyo_listings_df['price'] <=13207)]
+
 plt.figure(figsize=(20,10))
-sns.scatterplot(tokyo_listings_df['number_of_reviews'],tokyo_listings_df['price'])
+sns.scatterplot(df['number_of_reviews'],df['price'])
 plt.xlabel('Total number of Reviews')
 plt.ylabel('Price')
-plt.xticks(list(range(0,700,20)))
-plt.yticks(list(range(0,1300000,100000)))
+plt.xticks(list(range(0,700,100)))
+plt.yticks(list(range(5093,13208,500)))
 plt.ticklabel_format(style='plain')
+plt.show()
 
 square_distances = []
-x = tokyo_listings_df[['number_of_reviews','price']]
+x = df[['number_of_reviews','price']]
 for i in range(1, 11):
     km = KMeans(n_clusters=i, random_state=42)
     km.fit(x)
@@ -223,21 +234,20 @@ plt.title('Elbow Method')
 plt.xticks(list(range(1,11)))
 plt.show()
 
-km = KMeans(n_clusters=3, random_state=42)
+km = KMeans(n_clusters=4, random_state=42)
 y_pred = km.fit_predict(x)
 
 plt.figure(figsize=(20,10))
 
-for i in range(3):
+for i in range(4):
     plt.scatter(x.loc[y_pred==i,'number_of_reviews'], x.loc[y_pred==i, 'price'])
 
-plt.yticks(list(range(0,1200001,100000)))
-plt.xticks(list(range(0,700,20)))
-plt.ticklabel_format(style='plain')
+plt.xticks(list(range(0,700,100)))
+plt.yticks(list(range(5093,13208,500)))
 plt.xlabel('Total Reviews')
 plt.ylabel('Price')
 
-plt.scatter(km.cluster_centers_[:,0], km.cluster_centers_[:,1], s=250, marker='+', c='black', edgecolors='black', label='centroids')
+plt.scatter(km.cluster_centers_[:,0], km.cluster_centers_[:,1], s=250, marker='X', c='black', edgecolors='black', label='centroids')
 
 plt.figure(figsize=(20,10))
 plt.scatter(tokyo_listings_df['longitude'], tokyo_listings_df['latitude'])
@@ -259,18 +269,18 @@ plt.title('Elbow Method')
 plt.xticks(list(range(1,11)))
 plt.show()
 
-km = KMeans(n_clusters=4, random_state=42)
+km = KMeans(n_clusters=5, random_state=42)
 y_pred = km.fit_predict(x)
 
 plt.figure(figsize=(20,10))
 
-for i in range(4):
+for i in range(5):
     plt.scatter(x.loc[y_pred==i, 'longitude'], x.loc[y_pred==i, 'latitude'])
 
 plt.xlabel('Latitude')
 plt.ylabel('Longitude')
 
-plt.scatter(km.cluster_centers_[:,0], km.cluster_centers_[:,1], s=250, marker='+', c='black', edgecolors='black', label='centroids')
+plt.scatter(km.cluster_centers_[:,0], km.cluster_centers_[:,1], s=250, marker='X', c='black', edgecolors='black', label='centroids')
 
 from sklearn.decomposition import PCA
 
@@ -293,13 +303,14 @@ x_pca = pca.fit(x).transform(x)
 
 print('Explained variation per principal component: {}'.format(pca.explained_variance_ratio_))
 
-plt.figure(figsize=(10,6))
+plt.figure(figsize=(16,10))
 labels = y.unique()
 for i in range(len(labels)):
     plt.scatter(x_pca[y==labels[i], 0], x_pca[y==labels[i], 1], label=labels[i])
 
-plt.xlabel('PC_1')
-plt.ylabel('PC_2')
+plt.title('Principal Component Analysis')
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
 plt.legend()
 plt.show()
 
@@ -307,9 +318,9 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import KFold
 from sklearn.metrics import accuracy_score
 
-model = RandomForestClassifier(random_state=42)
+model = RandomForestClassifier(random_state=0)
 accuracies = []
-kf = KFold(n_splits=10, shuffle=True, random_state=42)
+kf = KFold(n_splits=10, shuffle=True, random_state=0)
 
 for train_index, test_index in kf.split(x_pca, y):
     x_train, y_train = x_pca[train_index], y.iloc[train_index]
@@ -332,7 +343,7 @@ y = tokyo_listings_df['room_type']
 
 x = tokyo_listings_df.drop(['id','host_id','name','host_name','neighbourhood','room_type'], axis=1)
 
-x_train, x_test, y_train, y_test =train_test_split(x, y, test_size=0.2)  #splits in 4 output
+x_train, x_test, y_train, y_test =train_test_split(x, y, test_size=0.3)  #splits in 4 output
 
 from sklearn.ensemble import RandomForestClassifier
 model = RandomForestClassifier() 
@@ -341,14 +352,34 @@ model.fit(x_train, y_train)
 y_pred = model.predict(x_test)
 sum(y_pred == y_test) / len(y_pred)
 
-"""Regression"""
+from sklearn.metrics import ConfusionMatrixDisplay
+
+ConfusionMatrixDisplay.from_predictions(y_test, y_pred, normalize=None, xticks_rotation='vertical',cmap='Blues_r')
+plt.title('Confusion Matrix for Random Forest Classifier')
+plt.show()
+
+"""**For Entire Home:**
+
+
+
+
+TP: 1894  (predicted = actual)
+
+FN: 1+90+0  (model predict as private room what should be entire home)
+
+FP: 22+313+8 (model predict as entire home what should be different)
+
+TN: remaining cells (model predict correctly what is not entire home)
+
+### Regression
+"""
 
 from sklearn.linear_model import LinearRegression
 
-x=tokyo_listings_df.minimum_nights
-y=tokyo_listings_df.price
+x= tokyo_listings_df.minimum_nights
+y= tokyo_listings_df.price
 
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.2, random_state = 42)
+x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.2, random_state = 0)
 
 x_train = x_train.to_numpy().reshape(-1, 1)
 x_train #every point on its own raw
@@ -357,27 +388,47 @@ model = LinearRegression()
 model.fit(x_train, y_train)  #fitting a formula to the data -> take all x and y input and understand their function
 
 x_test=x_test.to_numpy().reshape(-1, 1)
-x_test
 
 y_pred=model.predict(x_test)
-y_pred
+
 #check how it fits x_test
 #y_pred should be close to y_test
 
-df = pd.DataFrame({'Actual': y_test, 
+price = pd.DataFrame({'Actual': y_test, 
                   'Predicted': y_pred})
-df.head(10)
+price.head(10)
+
+filt_df=tokyo_listings_df.loc[(tokyo_listings_df['minimum_nights'] <=31)]
+x2= filt_df.minimum_nights
+y2=filt_df.price
+
+x2_train, x2_test, y2_train, y2_test = train_test_split(x2, y2, test_size = 0.2, random_state = 0)
+x2_train = x2_train.to_numpy().reshape(-1, 1)
+
+model2 = LinearRegression() 
+model2.fit(x2_train, y2_train)
+
+x2_test=x2_test.to_numpy().reshape(-1, 1)
+y2_pred=model.predict(x2_test)
 
 plt.figure(figsize=(10,6))
 plt.scatter(x_train, y_train)
-
 plt.scatter(x_test, y_test, c='red')
-
 plt.plot(x_test, y_pred)
+plt.xlabel('Minimum Nights')
+plt.ylabel('Price (¥)')
+plt.title('Price Prediction')
+
 
 plt.figure(figsize=(10,6))
-plt.scatter(x_train, y_train)
-plt.scatter(x_test, y_test, c='red')
-plt.plot(x_test, y_pred)
+plt.scatter(x2_train, y2_train)
+plt.scatter(x2_test, y2_test, c='red')
+plt.plot(x2_test, y2_pred)
+plt.xlabel('Minimum Stay for Short Booking ')
+plt.ylabel('Price (¥)')
+plt.title('Price Prediction')
+plt.show()
 
-model.intercept_,model.coef_
+print(model.intercept_,model.coef_)
+print(model2.intercept_,model2.coef_)
+
