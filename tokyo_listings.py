@@ -81,7 +81,7 @@ neighbour_pop.count()
 plt.figure(figsize=(20,12))
 plt.pie(neighbour_pop, labels=neighbour_pop, autopct = '%1.1f%%', startangle=100)       #autopic show percentage; 1 one decimal
 plt.legend(neighbour_pop.index,loc='center left',bbox_to_anchor=(1, 0.5))
-plt.title('Neighbourhood Popularity')
+plt.title('Neighbourhood Frequency')
 plt.show()
 
 top_neigh=tokyo_listings_df.loc[tokyo_listings_df['neighbourhood'].isin(['Chuo Ku', 'Arakawa Ku', 'Edogawa Ku', 'Katsushika Ku',
@@ -102,19 +102,19 @@ fig3 =px.scatter_mapbox(data_frame=top_neigh,
 fig3.update_layout(mapbox_style="carto-positron")
 fig3.update_layout(margin={"r":0,"t":1,"l":0,"b":0})
 
-"""Accomodation popularity in Tokyo"""
+"""Accomodation Frequency in Tokyo"""
 
 room_type_pop =tokyo_listings_df['room_type'].value_counts()     #popularity of types of room
 
 plt.figure(figsize=(12,12))
 plt.pie(room_type_pop, labels=room_type_pop,autopct = '%1.1f%%', startangle=90)       #autopic show percentage; 1 one decimal
 plt.legend(tokyo_listings_df['room_type'].value_counts().index,title='Room Category')
-plt.title('Room Popularity')
+plt.title('Room Frequency')
 plt.show()
 
-"""Popularity of accomodation (for each type) in top neighbourhoods"""
+"""Frequency of each accomodation type  in top neighbourhoods"""
 
-top_neigh.neighbourhood=pd.Categorical(top_neigh.neighbourhood, sorted(top_neigh.neighbourhood.unique()), ordered=True)  #reorder neigh in alphabetical technique
+top_neigh=top_neigh.sort_values(by='neighbourhood')
 
 plt.figure(figsize=(20,10))
 fig5= sns.catplot(x='room_type', col='neighbourhood',col_wrap=4, data=top_neigh, kind='count', height=5)
@@ -210,7 +210,45 @@ tokyo_listings_df.price.describe()
 
 df=tokyo_listings_df.loc[(tokyo_listings_df['price'] >=5093) & (tokyo_listings_df['price'] <=13207)]
 
-plt.figure(figsize=(20,10))
+plt.figure(figsize=(10,6))
+sns.scatterplot(df['price'],df['minimum_nights'])
+plt.xlabel('Price')
+plt.ylabel('Minimum Nights')
+plt.yticks(list(range(0,100,5)))
+plt.xticks(list(range(5093,13208,700)))
+plt.ticklabel_format(style='plain')
+plt.show()
+
+square_distances = []
+x = df[['price','minimum_nights']]
+for i in range(1, 11):
+    km = KMeans(n_clusters=i, random_state=42)
+    km.fit(x)
+    square_distances.append(km.inertia_)
+
+plt.figure(figsize=(10, 6))
+plt.plot(range(1,11), square_distances, 'bx-')
+plt.xlabel('K')
+plt.ylabel('inertia')
+plt.title('Elbow Method')
+plt.xticks(list(range(1,11)))
+plt.show()
+
+km = KMeans(n_clusters=4, random_state=42)
+y_pred = km.fit_predict(x)
+
+plt.figure(figsize=(10,6))
+
+for i in range(4):
+    plt.scatter(x.loc[y_pred==i,'price'], x.loc[y_pred==i, 'minimum_nights'])
+
+
+plt.xlabel('Price')
+plt.ylabel('Minimum Nights')
+
+plt.scatter(km.cluster_centers_[:,0], km.cluster_centers_[:,1], s=100, marker='X', c='black', edgecolors='black', label='centroids')
+
+plt.figure(figsize=(10,6))
 sns.scatterplot(df['number_of_reviews'],df['price'])
 plt.xlabel('Total number of Reviews')
 plt.ylabel('Price')
@@ -234,12 +272,12 @@ plt.title('Elbow Method')
 plt.xticks(list(range(1,11)))
 plt.show()
 
-km = KMeans(n_clusters=4, random_state=42)
+km = KMeans(n_clusters=5, random_state=42)
 y_pred = km.fit_predict(x)
 
-plt.figure(figsize=(20,10))
+plt.figure(figsize=(10,6))
 
-for i in range(4):
+for i in range(5):
     plt.scatter(x.loc[y_pred==i,'number_of_reviews'], x.loc[y_pred==i, 'price'])
 
 plt.xticks(list(range(0,700,100)))
@@ -247,7 +285,7 @@ plt.yticks(list(range(5093,13208,500)))
 plt.xlabel('Total Reviews')
 plt.ylabel('Price')
 
-plt.scatter(km.cluster_centers_[:,0], km.cluster_centers_[:,1], s=250, marker='X', c='black', edgecolors='black', label='centroids')
+plt.scatter(km.cluster_centers_[:,0], km.cluster_centers_[:,1], s=100, marker='X', c='black', edgecolors='black', label='centroids')
 
 plt.figure(figsize=(20,10))
 plt.scatter(tokyo_listings_df['longitude'], tokyo_listings_df['latitude'])
@@ -282,6 +320,8 @@ plt.ylabel('Longitude')
 
 plt.scatter(km.cluster_centers_[:,0], km.cluster_centers_[:,1], s=250, marker='X', c='black', edgecolors='black', label='centroids')
 
+"""PCA for dimensionaly reduction"""
+
 from sklearn.decomposition import PCA
 
 y = tokyo_listings_df['room_type']
@@ -300,6 +340,7 @@ plt.ylabel('Cumulative Explained Variance')
 
 pca = PCA(n_components=2)
 x_pca = pca.fit(x).transform(x)
+x_pca.shape    #reduced to 2 attributes
 
 print('Explained variation per principal component: {}'.format(pca.explained_variance_ratio_))
 
@@ -343,7 +384,7 @@ y = tokyo_listings_df['room_type']
 
 x = tokyo_listings_df.drop(['id','host_id','name','host_name','neighbourhood','room_type'], axis=1)
 
-x_train, x_test, y_train, y_test =train_test_split(x, y, test_size=0.3)  #splits in 4 output
+x_train, x_test, y_train, y_test =train_test_split(x, y, test_size=0.3, random_state=42)  #splits in 4 output
 
 from sklearn.ensemble import RandomForestClassifier
 model = RandomForestClassifier() 
@@ -363,72 +404,27 @@ plt.show()
 
 
 
-TP: 1894  (predicted = actual)
+TP: C0,0  (predicted = actual)
 
-FN: 1+90+0  (model predict as private room what should be entire home)
+FN: C0,1 + C0,2 + c0,3  (model predict as private room what should be entire home)
 
-FP: 22+313+8 (model predict as entire home what should be different)
+FP: C1,0 + C2,0 + C3,0 (model predict as entire home what should be different)
 
 TN: remaining cells (model predict correctly what is not entire home)
-
-### Regression
 """
 
-from sklearn.linear_model import LinearRegression
+y = tokyo_listings_df['neighbourhood']
 
-x= tokyo_listings_df.minimum_nights
-y= tokyo_listings_df.price
+x = tokyo_listings_df.drop(['id','host_id','name','host_name','neighbourhood','room_type'], axis=1)
 
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.2, random_state = 0)
+x_train, x_test, y_train, y_test =train_test_split(x, y, test_size=0.3, random_state=42)
 
-x_train = x_train.to_numpy().reshape(-1, 1)
-x_train #every point on its own raw
+model = RandomForestClassifier() 
+model.fit(x_train, y_train)
 
-model = LinearRegression() 
-model.fit(x_train, y_train)  #fitting a formula to the data -> take all x and y input and understand their function
+y_pred = model.predict(x_test)
+sum(y_pred == y_test) / len(y_pred)
 
-x_test=x_test.to_numpy().reshape(-1, 1)
+from sklearn.metrics import classification_report
 
-y_pred=model.predict(x_test)
-
-#check how it fits x_test
-#y_pred should be close to y_test
-
-price = pd.DataFrame({'Actual': y_test, 
-                  'Predicted': y_pred})
-price.head(10)
-
-filt_df=tokyo_listings_df.loc[(tokyo_listings_df['minimum_nights'] <=31)]
-x2= filt_df.minimum_nights
-y2=filt_df.price
-
-x2_train, x2_test, y2_train, y2_test = train_test_split(x2, y2, test_size = 0.2, random_state = 0)
-x2_train = x2_train.to_numpy().reshape(-1, 1)
-
-model2 = LinearRegression() 
-model2.fit(x2_train, y2_train)
-
-x2_test=x2_test.to_numpy().reshape(-1, 1)
-y2_pred=model.predict(x2_test)
-
-plt.figure(figsize=(10,6))
-plt.scatter(x_train, y_train)
-plt.scatter(x_test, y_test, c='red')
-plt.plot(x_test, y_pred)
-plt.xlabel('Minimum Nights')
-plt.ylabel('Price (¥)')
-plt.title('Price Prediction')
-
-
-plt.figure(figsize=(10,6))
-plt.scatter(x2_train, y2_train)
-plt.scatter(x2_test, y2_test, c='red')
-plt.plot(x2_test, y2_pred)
-plt.xlabel('Minimum Stay for Short Booking ')
-plt.ylabel('Price (¥)')
-plt.title('Price Prediction')
-plt.show()
-
-print(model.intercept_,model.coef_)
-print(model2.intercept_,model2.coef_)
-
+print(classification_report(y_test, y_pred,zero_division=1))
