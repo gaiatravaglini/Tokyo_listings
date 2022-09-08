@@ -15,20 +15,37 @@ import streamlit as st
 
 tokyo_listings_df =pd.read_csv('/Users/gaiatravaglini/Desktop/Tokyo_listings/listings.csv', na_values='')
 
-st.header(' Airbnb Tokyo Activities Analysis')
-#('An explanation of the project')
+from PIL import Image
+image = Image.open('Tokyo.jpg')
+
+st.image(image, caption='')
+
+st.title(' Airbnb Tokyo Activities Analysis')
+
+st.write('The project aims at discovering some particular insights within data collected in 2022 from AirBnb in Tokyo area.')
+st.write('The project is structured as follows:')
+st.write('- Data Cleaning: filter the dataset by removing unseful attributes and replace null values.')
+st.write('- Data Exploration')
+st.write('- Clustering: divide data points into groups.')
+st.write('- Classification: classify data points into different classes, according to a certain target.')
 
 tokyo_listings_df.drop(['neighbourhood_group','last_review','reviews_per_month','calculated_host_listings_count','number_of_reviews_ltm','license'], axis=1,inplace=True)
-
-if st.checkbox('Show raw data:'):
-  st.write('The raw data:')
-  st.write(tokyo_listings_df)
-
-st.write('Correlation Matrix')
+tokyo_listings_df.fillna({'host_name':0}, inplace=True)
 tokyo_listings_corr=tokyo_listings_df.corr()
-fig, ax= plt.subplots(figsize=(10,6))
-sns.heatmap(tokyo_listings_corr, annot=True)
-st.write(fig)
+
+if st.checkbox('Show Raw Data:'):
+    st.write('The raw data:')
+    st.write(tokyo_listings_df)
+    
+if st.checkbox('Show Data Description:'):
+    st.write('Size:',tokyo_listings_df.shape)
+    st.write('**Categorical Data**:', '4 attributes',  '_(name, host_name, neighbourhood, room_type)_')
+    st.write('**Quantitative Data**:', '6 attributes',  '_(latitude, longitude, price, minimum_nights, number_of_reviews, availability_365)_')
+    st.write('Correlation Matrix')
+    fig, ax= plt.subplots(figsize=(10,6))
+    sns.heatmap(tokyo_listings_corr, annot=True)
+    st.write(fig)
+
 
 
 st.header('Data Exploration')
@@ -47,6 +64,10 @@ fig1.set_ylabel('Number of listings')
 fig1.set_xlabel('Host Id')
 st.write(fig)
 
+with st.expander("See explanation"):
+     st.write(
+         "The chart  shows the neighbourhoods with the highest number of listings in Tokyo. \n \n \n **1st:** Host Hiroshi (ID:258668827), 98 listings.")
+
 st.subheader('Neighbourhood in Tokyo with the highest number of listings')
 
 neighbour_pop =tokyo_listings_df['neighbourhood'].value_counts()[tokyo_listings_df['neighbourhood'].value_counts()>200]
@@ -59,6 +80,10 @@ plt.pie(neighbour_pop, labels=neighbour_pop, autopct = '%1.1f%%', startangle=100
 plt.legend(neighbour_pop.index,loc='center left',bbox_to_anchor=(1, 0.5))
 plt.title('Neighbourhood Popularity')
 st.write(fig)
+
+with st.expander("See explanation"):
+     st.write(
+         'The chart shows how frequent the different types of accomodation are and their respective listing counts. \n \n \n In this graph, to allow for a better visualization, only the neighbourhoods with the highest number of listings are considered (> 200 listings)')
 
 top_neigh=tokyo_listings_df.loc[tokyo_listings_df['neighbourhood'].isin(['Chuo Ku', 'Arakawa Ku', 'Edogawa Ku', 'Katsushika Ku',
        'Minato Ku', 'Toshima Ku', 'Sumida Ku', 'Shibuya Ku',
@@ -81,6 +106,10 @@ fig3.update_layout(margin={"r":0,"t":1,"l":0,"b":0})
 st.write('Map of Tokyo Neighbourhood Distribution')
 st.plotly_chart(fig3,se_container_width=False, sharing="streamlit")
 
+with st.expander("See explanation"):
+     st.write(
+         'The graph allows us to have a better understanding of how Airbnb activities are distributed in Tokyo, grouped by their respective neighbourhood')
+
 st.subheader('Accomodation Frequency in Tokyo')
 
 room_type_pop =tokyo_listings_df['room_type'].value_counts()    
@@ -90,6 +119,9 @@ plt.pie(room_type_pop, labels=room_type_pop,autopct = '%1.1f%%', startangle=90)
 plt.legend(tokyo_listings_df['room_type'].value_counts().index,title='Room Category')
 plt.title('Room Popularity')
 st.write(fig)
+with st.expander("See explanation"):
+     st.write(
+         'The chart shows how frequent the different types of accomodation are and their respective listing counts. \n \n \n **1st** Host: Hiroshi (ID:258668827), 98 listings')
 
 st.subheader('Frequency of each accomodation type in top neighbourhoods')
 
@@ -101,7 +133,8 @@ fig5.set_axis_labels("",'Room Count')
 fig5.despine(left=True)
 fig5.set_xticklabels(rotation=90)
 st.pyplot(fig5)
-st.write('_the plot show the frequency of each type of room for the main considered neighbourhood_')
+with st.expander("See explanation"):
+     st.write('the graph shows the frequency of each type of accomodation for top neighbourhoods. \n \n \n For all neighbourhoods, the winner is _entire home_ , which means that more hosts prefer to rent the entire apartment rather than rent it into single rooms')
 
 st.subheader('Average price of an accomodation in top neighbourhoods')
 
@@ -125,6 +158,8 @@ fig6.set_title('Average Price per Neighbourhood')
 fig6.set_ylabel('Average Price')
 fig6.set_xlabel('Neighbourhood')
 st.write(fig)
+with st.expander("See explanation"):
+     st.write('The graph shows the average price of listings for each top neighbourhhod. \n \n \n Chuo has the highest average price, it could depends on its central position')
 
 st.subheader('Average price for each accomodation type in top neighbourhoods')
 
@@ -143,8 +178,11 @@ fig7.set_axis_labels("",'Average Price')
 fig7.despine(left=True)
 fig7.set_xticklabels(rotation=90)
 st.pyplot(fig7)
+with st.expander("See explanation"):
+     st.write(' The graph has a more detailed analysis: the average price of each accomodation category per neighbourhood. \n \n \n Entire Home and Private Room are the most expensive in almost every neighbourhood')
 
 st.subheader('Distribution of price for each top neighbourhood')
+d =top_neigh['price'].groupby(top_neigh['neighbourhood']).describe()
 
 fig, ax= plt.subplots(figsize=(20,12))
 fig8=sns.boxplot(data=top_neigh, x='neighbourhood',y='price')
@@ -152,7 +190,10 @@ fig8.get_yaxis().set_major_formatter(lb.ticker.FuncFormatter(lambda x, p: format
 plt.ylim(0,100000)
 plt.title('Price Distribution (¥)')
 st.write(fig)
-
+with st.expander("See explanation"):
+     st.write('The graph shows how prices in each top neighbourhood are distribute. \n \n \n Each box shows the mean, the 1st (0.25%) and 3rd quartile (0.75%) and extreme points')
+     if st.checkbox('Show Statistics'):
+        st.write(d)
 top_neigh['price'].groupby(top_neigh['neighbourhood']).describe()   #check statistics
 
 
@@ -171,7 +212,9 @@ fig9.update_layout(mapbox_style="carto-positron")
 fig9.update_layout(margin={"r":0,"t":0,"l":0,"b":0})  
 st.write('Map of Tokyo Price Distribution')
 st.plotly_chart(fig9, se_container_width=False, sharing="streamlit")
-
+with st.expander("See explanation"):
+     st.write('The graph shows an interactive tool to understand how prices are distributed on a map of Tokyo. \n \n \n The activities with an higher price are marked by a bigger and lighter circle and they mainly focus on the south-center area')
+     
 
 st.header('Clustering')
 
