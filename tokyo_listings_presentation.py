@@ -24,10 +24,10 @@ st.title(' Airbnb Tokyo Activities Analysis')
 
 st.write('The project aims at discovering some particular insights within data collected in 2022 from AirBnb in Tokyo area.')
 st.write('The project is structured as follows:')
-st.write('- Data Cleaning: filter the dataset by removing unseful attributes and replace null values.')
-st.write('- Data Exploration')
-st.write('- Clustering: divide data points into groups.')
-st.write('- Classification: classify data points into different classes, according to a certain target.')
+st.write('- **Data Cleaning:** filter the dataset by removing unuseful attributes and replace null values.')
+st.write('- **Data Exploration**')
+st.write('- **Clustering:** divide data points into groups.')
+st.write('- **Classification:** classify data points into different classes, according to a certain target.')
 
 tokyo_listings_df.drop(['neighbourhood_group','last_review','reviews_per_month','calculated_host_listings_count','number_of_reviews_ltm','license'], axis=1,inplace=True)
 tokyo_listings_df.fillna({'host_name':0}, inplace=True)
@@ -68,7 +68,7 @@ with st.expander("See explanation"):
      st.write(
          "The chart  shows the neighbourhoods with the highest number of listings in Tokyo. \n \n \n **1st:** Host Hiroshi (ID:258668827), 98 listings.")
 
-st.subheader('Neighbourhood in Tokyo with the highest number of listings')
+st.subheader('Neighbourhoods in Tokyo with the highest number of listings')
 
 neighbour_pop =tokyo_listings_df['neighbourhood'].value_counts()[tokyo_listings_df['neighbourhood'].value_counts()>200]
 #filter neighbourhoods with at least 200 activities
@@ -108,7 +108,7 @@ st.plotly_chart(fig3,se_container_width=False, sharing="streamlit")
 
 with st.expander("See explanation"):
      st.write(
-         'The graph allows us to have a better understanding of how Airbnb activities are distributed in Tokyo, grouped by their respective neighbourhood')
+         'The graph allows us to have a better understanding of how Airbnb activities are distributed in Tokyo, grouped by their respective neighbourhood.')
 
 st.subheader('Accomodation Frequency in Tokyo')
 
@@ -121,7 +121,7 @@ plt.title('Room Popularity')
 st.write(fig)
 with st.expander("See explanation"):
      st.write(
-         'The chart shows how frequent the different types of accomodation are and their respective listing counts. \n \n \n **1st** Host: Hiroshi (ID:258668827), 98 listings')
+         'The chart shows how frequent the different types of accomodation are and their respective listing counts')
 
 st.subheader('Frequency of each accomodation type in top neighbourhoods')
 
@@ -134,7 +134,7 @@ fig5.despine(left=True)
 fig5.set_xticklabels(rotation=90)
 st.pyplot(fig5)
 with st.expander("See explanation"):
-     st.write('the graph shows the frequency of each type of accomodation for top neighbourhoods. \n \n \n For all neighbourhoods, the winner is _entire home_ , which means that more hosts prefer to rent the entire apartment rather than rent it into single rooms')
+     st.write('The graph shows the frequency of each type of accomodation for top neighbourhoods. \n \n \n For all neighbourhoods, the winner is _entire home_ , which means that more hosts prefer to rent their entire apartments rather than rent them in single rooms')
 
 st.subheader('Average price of an accomodation in top neighbourhoods')
 
@@ -159,7 +159,7 @@ fig6.set_ylabel('Average Price')
 fig6.set_xlabel('Neighbourhood')
 st.write(fig)
 with st.expander("See explanation"):
-     st.write('The graph shows the average price of listings for each top neighbourhhod. \n \n \n Chuo has the highest average price, it could depends on its central position')
+     st.write('The graph shows the average price of the listings for each top neighbourhoods. \n \n \n Chuo has the highest average price and it could depend on its central position')
 
 st.subheader('Average price for each accomodation type in top neighbourhoods')
 
@@ -179,7 +179,7 @@ fig7.despine(left=True)
 fig7.set_xticklabels(rotation=90)
 st.pyplot(fig7)
 with st.expander("See explanation"):
-     st.write(' The graph has a more detailed analysis: the average price of each accomodation category per neighbourhood. \n \n \n Entire Home and Private Room are the most expensive in almost every neighbourhood')
+     st.write(' The graph has a more detailed analysis: the average price of each accomodation category per neighbourhood. \n \n \n Entire Home and Private Room are the most expensive in almost every neighbourhood.')
 
 st.subheader('Distribution of price for each top neighbourhood')
 d =top_neigh['price'].groupby(top_neigh['neighbourhood']).describe()
@@ -191,7 +191,7 @@ plt.ylim(0,100000)
 plt.title('Price Distribution (¥)')
 st.write(fig)
 with st.expander("See explanation"):
-     st.write('The graph shows how prices in each top neighbourhood are distribute. \n \n \n Each box shows the mean, the 1st (0.25%) and 3rd quartile (0.75%) and extreme points')
+     st.write('The graph shows how prices in each top neighbourhood are distributed. \n \n \n Each box shows the mean, the 1st quartile(0.25%) and the 3rd quartile (0.75%) and its extreme points')
      if st.checkbox('Show Statistics'):
         st.write(d)
 top_neigh['price'].groupby(top_neigh['neighbourhood']).describe()   #check statistics
@@ -213,7 +213,7 @@ fig9.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 st.write('Map of Tokyo Price Distribution')
 st.plotly_chart(fig9, se_container_width=False, sharing="streamlit")
 with st.expander("See explanation"):
-     st.write('The graph shows an interactive tool to understand how prices are distributed on a map of Tokyo. \n \n \n The activities with an higher price are marked by a bigger and lighter circle and they mainly focus on the south-center area')
+     st.write('The graph works as an interactive tool to understand how prices are distributed on a map of Tokyo. \n \n \n The activities with an higher price are marked by a bigger and lighter circle and they are mainly mapped on the south-center area')
      
 
 st.header('Clustering')
@@ -225,7 +225,7 @@ if st.checkbox('Show price statistics'):
 
 
 
-st.write('To allow for a better visualization, i filtered the price between the first(0.25) and third (0.75) quartile')
+st.write('To allow for a better visualization, It is useful to filter the price between the first quartile(0.25) and thirdquartile(0.75)')
 df=tokyo_listings_df.loc[(tokyo_listings_df['price'] >=5093) & (tokyo_listings_df['price'] <=13207)]
 
 if st.checkbox('Show new data'):
@@ -243,6 +243,10 @@ plt.ticklabel_format(style='plain')
 plt.title('Price Behaviour')
 st.write(fig)
 
+if st.sidebar.checkbox('Show Elbow Method Code:'):
+    st.write('The elbow method:')
+    st.code('square_distances = [] \n \n \n x = df[[ price, minimum_nights]] \n \n \n for i in range(1, 11): \n \n \n km = KMeans(n_clusters=i, random_state=42) \n \n \n km.fit(x) \n \n \n square_distances.append(km.inertia_)')
+
 square_distances = []
 x = df[['price','minimum_nights']]
 for i in range(1, 11):
@@ -257,6 +261,12 @@ plt.ylabel('inertia')
 plt.title('Elbow Method')
 plt.xticks(list(range(1,11)))
 st.write(fig)
+with st.expander("See explanation"):
+     st.write('The **Elbow Method** shows the number of clusters that should be adopted when adopting Kmeans. \n \n \n The Inertia variable on the y-axis plots the Within-Cluster-Sum of Squared Errors (WSS) against different values of k, and choose the k for which WSS becomes first starts to diminish.')
+
+if st.sidebar.checkbox('Show Kmeans Code:'):
+    st.write('Kmeans Initialization:')
+    st.code('km = KMeans(n_clusters=4, random_state=42) \n \n \n y_pred = km.fit_predict(x)')
 
 km = KMeans(n_clusters=4, random_state=42)
 y_pred = km.fit_predict(x)
@@ -269,8 +279,11 @@ plt.ylabel('Minimum Nights')
 plt.title('Clustering with K=4')
 plt.scatter(km.cluster_centers_[:,0], km.cluster_centers_[:,1], s=200, marker='X', c='black', edgecolors='black', label='centroids')
 st.write(fig)
+with st.expander("See explanation"):
+     st.write('There 4 clusters, based on 4 increasing ranges of price. \n \n \n It is interesting to see that as the price increases, also some points which allows for a longer minimum stay appear')
 
 st.subheader('2nd Clustering: Number of Reviews and Price')
+
 fig, ax= plt.subplots(figsize=(20,12))
 sns.scatterplot(df['number_of_reviews'],df['price'])
 plt.xlabel('Total number of Reviews')
@@ -346,9 +359,13 @@ plt.title('Clustering with K=5')
 plt.scatter(km.cluster_centers_[:,0], km.cluster_centers_[:,1], s=200, marker='X', c='black', edgecolors='black', label='centroids')
 st.write(fig)
 
+if st.checkbox('Show Map:'):
+    st.map(tokyo_listings_df)
+
 
 st.header('Pricipal Component Analysis')
 from sklearn.decomposition import PCA
+st.write('PCA is a method that reduce the dimensionality of large data sets, by transforming a large set of variables into a smaller one that still contains most of the information of the initial dataset.')
 
 y = tokyo_listings_df['room_type']
 
@@ -364,12 +381,17 @@ plt.title('Explained Variance by components')
 plt.xlabel('Number of Components')
 plt.ylabel('Cumulative Explained Variance')
 st.write(fig)
+with st.expander("See explanation"):
+     st.write('Principal components are new variables constructed as linear combinations of the initial variables. \n \n \n The principal components are uncorrelated and most of the information within the initial variables is compressed into the first components. \n \n \n PCA put maximum possible information in the first component, then maximum remaining information in the second and so on.')
+
+
+
 
 pca = PCA(n_components=2)
 x_pca = pca.fit(x).transform(x)
 vr=format(pca.explained_variance_ratio_)
 st.write('The shape of the dataset is:',x_pca.shape)
-st.write('PCA allows to reduce the dataset dimensionality from N attributes to 2') 
+
 
 print('Explained variation per principal component: {}'.format(pca.explained_variance_ratio_))
 st.write('Explained variation per principal component:',vr)
@@ -385,15 +407,19 @@ plt.ylabel('Principal Component 2')
 plt.legend()
 st.write(fig)
 
-st.header('PCA Validation')
+st.subheader('PCA Testing')
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import KFold
 from sklearn.metrics import accuracy_score
 
-model = RandomForestClassifier(random_state=0)
+model = RandomForestClassifier(random_state=42)
 accuracies = []
-kf = KFold(n_splits=10, shuffle=True, random_state=0)
-st.write('Accuracy for 10 splits')
+kf = KFold(n_splits=10, shuffle=True, random_state=42)
+
+if st.sidebar.checkbox('Show Kfold Code:'):
+    st.write('Kfold')
+    st.code('for train_index, test_index in kf.split(x_pca, y): \n \n \n x_train, y_train = x_pca[train_index], y.iloc[train_index] \n \n \n x_test, y_test = x_pca[train_index], y.iloc[train_index] \n \n \n model.fit(x_train, y_train) \n \n \n y_pred = model.predict(x_test) \n \n \n accuracy = accuracy_score(y_pred, y_test) \n \n \n accuracies.append(accuracy) \n \n \n print(Accuracy = , accuracy)')
+
 
 for train_index, test_index in kf.split(x_pca, y):
     x_train, y_train = x_pca[train_index], y.iloc[train_index]
@@ -403,26 +429,26 @@ for train_index, test_index in kf.split(x_pca, y):
     y_pred = model.predict(x_test)
 
     accuracy = accuracy_score(y_pred, y_test)
-
-    accuracies.append(accuracy)
     print('Accuracy = ', accuracy)
-    
     st.write('Accuracy:',accuracy)
+
 
 st.header('Classification')
 
 from sklearn.model_selection import train_test_split
 
 st.subheader('1st Classification Analysis')
-st.write('How well room_type is able to describe the dataset by using random forest as classifier')
+
+if st.checkbox('Show 1st Classification Code'):
+    st.code('y = tokyo_listings_df[room_type] \n  x = tokyo_listings_df.drop([id, host_id,name, host_name, neighbourhood, room_type], axis=1) \n \n x_train, x_test, y_train, y_test =train_test_split(x, y, test_size=0.3, random_state=42) \n \n  model = RandomForestClassifier() \n   model.fit(x_train, y_train) \n \n \n y_pred = model.predict(x_test) \n accuracy= sum(y_pred == y_test) / len(y_pred)')
+
 
 y = tokyo_listings_df['room_type']
 
 x = tokyo_listings_df.drop(['id','host_id','name','host_name','neighbourhood','room_type'], axis=1)
 
-x_train, x_test, y_train, y_test =train_test_split(x, y, test_size=0.3, random_state=42)  #splits in 4 output
-st.write('Code: x_train, x_test, y_train, y_test =train_test_split(x, y, test_size=0.3, random_state=42)')
-#Put explanation
+x_train, x_test, y_train, y_test =train_test_split(x, y, test_size=0.3, random_state=42)  
+
 
 from sklearn.ensemble import RandomForestClassifier
 model = RandomForestClassifier() 
@@ -430,9 +456,23 @@ model.fit(x_train, y_train)
 
 y_pred = model.predict(x_test)
 accuracy= sum(y_pred == y_test) / len(y_pred)
-st.write('accuracy:',accuracy)
+st.write('Accuracy:',accuracy)
 
-
+st.subheader('Kfold Validation')
+kf = KFold(n_splits=10, shuffle=True, random_state=42)
+accuracies = []
+i = 0
+for train_index, test_index in kf.split(x):
+    i += 1
+    model = RandomForestClassifier(random_state=42)
+    x_train, x_test = x.iloc[train_index], x.iloc[test_index]
+    y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+    model.fit(x_train, y_train)
+    y_pred = model.predict(x_test)
+    accuracy = accuracy_score(y_pred, y_test)
+    accuracies.append(accuracy)
+    print(i, ') accuracy = ', accuracy)
+st.write('Mean accuracy: ', np.array(accuracies).mean())
 
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import confusion_matrix
@@ -444,40 +484,52 @@ sns.heatmap(conf_matrix , annot=True , xticklabels=['Entire home/apt' , 'Private
 plt.ylabel("True")
 plt.xlabel("Predicted")
 st.pyplot(fig5)
-
-
-
-
-st.write('For Entire Home:')
-
-st.write('TP: C0,0  (predicted = actual)')
-
-st.write('FN: C0,1 + C0,2 + c0,3  (model predict as private room what should be entire home)')
-
-st.write('FP: C1,0 + C2,0 + C3,0 (model predict as entire home what should be different)')
-
-st.write('TN: remaining cells (model predict correctly what is not entire home)')
+with st.expander("See explanation"):
+     st.write('True Positive:You predicted positive and it’s true. \n \n True Negative: You predicted negative and it’s true. \n \n False Positive (Type 1 Error): You predicted positive and it’s false. \n \n False Negative (Type 2 Error): You predicted negative and it’s false.')
+     st.write('For **entire apartment/home:** \n \n **TP:** C0,0 \n \n **FN:** C0,1 + C0,2 + c0,3 \n \n **FP:** C1,0 + C2,0 + C3,0 \n \n  **TN:** remaining cells ')
 
 
 st.subheader('2nd Classification Analysis')
-st.write('How well Tokyo neighbourhood are able to describe the dataset by using random forest as classifier')
+
+if st.checkbox('Show 2nd Classification Code'):
+    st.code('y = tokyo_listings_df[neighbourhood] \n  x = tokyo_listings_df.drop([id, host_id,name, host_name, neighbourhood, room_type], axis=1) \n \n x_train, x_test, y_train, y_test =train_test_split(x, y, test_size=0.3, random_state=42) \n \n  model = RandomForestClassifier() \n   model.fit(x_train, y_train) \n \n \n y_pred = model.predict(x_test) \n accuracy= sum(y_pred == y_test) / len(y_pred)')
 
 y = tokyo_listings_df['neighbourhood']
 
 x = tokyo_listings_df.drop(['id','host_id','name','host_name','neighbourhood','room_type'], axis=1)
 
 x_train, x_test, y_train, y_test =train_test_split(x, y, test_size=0.3, random_state=42)
-st.write('Code: x_train, x_test, y_train, y_test =train_test_split(x, y, test_size=0.3, random_state=42)')
+
 
 model = RandomForestClassifier() 
 model.fit(x_train, y_train)
 
 y_pred = model.predict(x_test)
 accuracy= sum(y_pred == y_test) / len(y_pred)
-st.write('accuracy:',accuracy)
+st.write('Accuracy:',accuracy)
+
+st.subheader('Kfold Validation')
+kf = KFold(n_splits=10, shuffle=True, random_state=42)
+accuracies = []
+i = 0
+for train_index, test_index in kf.split(x):
+    i += 1
+    model = RandomForestClassifier(random_state=42)
+    x_train, x_test = x.iloc[train_index], x.iloc[test_index]
+    y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+    model.fit(x_train, y_train)
+    y_pred = model.predict(x_test)
+    accuracy = accuracy_score(y_pred, y_test)
+    accuracies.append(accuracy)
+    print(i, ') accuracy = ', accuracy)
+st.write('Mean accuracy: ', np.array(accuracies).mean())
+
 
 from sklearn.metrics import classification_report
 
+st.subheader('Classification Report')
 cl_report=print(classification_report(y_test, y_pred,zero_division=1))
 if st.checkbox('Show report'):
   st.text('Model Report:\n ' + classification_report(y_test, y_pred))
+  with st.expander("See explanation"):
+     st.write('**Precision:** Percentage of correct positive predictions relative to total positive predictions. \n \n **Recall:** Percentage of correct positive predictions relative to total actual positives. \n \n **F1 Score:** weighted harmonic mean of precision and recall. The closer to 1, the better the model. \n \n F1 Score: 2 * (Precision * Recall) / (Precision + Recall). \n \n **Support:** how many points belonged to each class in the test dataset.')
